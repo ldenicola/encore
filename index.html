@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Encore</title>
+<meta name="description" content="A personal music guide: world charts, your top songs, and questions answered.">
+<meta name="theme-color" content="#1B1220">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1B1220; --surface:#261A2C; --raise:#33243B; --line:#47344E;
+  --text:#F6EEE6; --muted:#AE9DB2; --amber:#F5B83D; --rose:#E65C80; --up:#86D8A6;
+  --display:'Bricolage Grotesque','Figtree',system-ui,sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --tabs-h:62px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100dvh; color:var(--text); font:16px/1.45 var(--body);
+  background:radial-gradient(130% 55% at 50% -12%, #432447 0%, rgba(67,36,71,0) 62%) fixed, var(--bg);
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;text-align:inherit}
+ul{list-style:none;margin:0;padding:0}
+h1,h2,p{margin:0}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:8px}
+[hidden]{display:none !important}
+
+.top{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(env(safe-area-inset-top) + 14px) 16px 4px}
+.mark{font:800 1.5rem/1 var(--display);letter-spacing:-.02em;color:var(--amber)}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--muted);flex:none}
+.icon-btn:active{background:var(--raise)}
+.icon-btn svg{width:22px;height:22px}
+svg.ln{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+main{max-width:560px;margin:0 auto;padding:8px 16px calc(var(--tabs-h) + env(safe-area-inset-bottom) + 28px)}
+main:focus{outline:none}
+.h{font:800 1.9rem/1.08 var(--display);letter-spacing:-.025em;margin:10px 0 14px;text-wrap:balance}
+.meta{color:var(--muted);font-size:.9rem;margin:12px 0 4px}
+
+.seg{display:flex;gap:4px;background:var(--surface);border-radius:14px;padding:4px;margin:0 0 10px}
+.seg button{flex:1;min-height:40px;border-radius:10px;text-align:center;font-weight:600;font-size:.92rem;color:var(--muted);padding:0 6px}
+.seg button[aria-pressed="true"]{background:var(--raise);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.seg.quiet{background:none;padding:0;gap:18px;margin:2px 0 4px}
+.seg.quiet button{flex:none;min-height:40px;border-radius:0;padding:0;border-bottom:2px solid transparent}
+.seg.quiet button[aria-pressed="true"]{background:none;box-shadow:none;border-bottom-color:var(--amber)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 8px;margin:0 -16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-weight:500;font-size:.92rem;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:#2A1830;font-weight:600}
+.chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
+.chips.wrap .chip{white-space:normal;text-align:left;padding:8px 14px;border-radius:16px;line-height:1.3}
+
+select,.field input{width:100%;min-height:46px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 20px,calc(100% - 14px) 20px;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+
+.row{display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(71,52,78,.55)}
+.row:last-child{border-bottom:0}
+.rank{flex:none;width:36px;text-align:center;font:800 1.45rem/1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.rank.top{color:var(--amber)}
+.row-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 0;min-height:66px;border-radius:10px}
+.row-main:active{background:rgba(51,36,59,.6)}
+.row.busy .row-main{opacity:.55}
+.art{flex:none;width:48px;height:48px;border-radius:8px;object-fit:cover;background:var(--raise)}
+.art.round{border-radius:50%}
+.art.ph{display:block;background:radial-gradient(circle at 50% 50%,var(--bg) 0 5px,var(--rose) 5px 11px,var(--raise) 11px)}
+.row-text{min-width:0;display:flex;flex-direction:column}
+.t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a{color:var(--muted);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.n{color:var(--text);opacity:.86;font-size:.9rem;margin-top:3px;line-height:1.35}
+.yours{color:var(--amber);font-size:.78rem;font-weight:600}
+.side{flex:none;font-size:.82rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mv.new{color:#2A1830;background:var(--amber);border-radius:6px;padding:2px 7px}
+.mv.up{color:var(--up)} .mv.down{color:var(--rose)}
+
+.bars li{margin:0}
+.bar{display:block;width:100%;padding:9px 0;min-height:52px}
+.bar-top{display:flex;justify-content:space-between;gap:12px;font-weight:600;text-transform:capitalize}
+.bar-top span:last-child{color:var(--muted);font-weight:500;text-transform:none;font-size:.9rem}
+.bar-track{display:block;height:6px;border-radius:3px;background:var(--surface);margin-top:7px;overflow:hidden}
+.bar-fill{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--rose),var(--amber))}
+
+.empty{padding:26px 0 8px}
+.empty h2{font:800 1.35rem/1.15 var(--display);letter-spacing:-.02em;margin-bottom:8px;text-wrap:balance}
+.empty p{color:var(--muted);max-width:44ch;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:999px;background:var(--amber);color:#2A1830;font-weight:600;text-align:center}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--text)}
+.btn.block{display:flex;width:100%}
+.note{color:var(--muted);font-size:.86rem}
+.err{color:var(--rose);margin:14px 0}
+.spin{display:flex;align-items:center;gap:10px;color:var(--muted);padding:18px 0}
+.spin::before{content:"";width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--amber);animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+.ex{margin:22px 0 0}
+.ex .q{font:800 1.3rem/1.2 var(--display);letter-spacing:-.02em;color:var(--amber);text-wrap:balance;margin-bottom:8px}
+.ex .ans{white-space:pre-wrap;margin-bottom:6px;max-width:62ch}
+.askbar{position:sticky;bottom:calc(var(--tabs-h) + env(safe-area-inset-bottom) + 10px);display:flex;gap:8px;margin-top:22px;
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 5px 5px 16px;box-shadow:0 10px 28px rgba(8,3,10,.55)}
+.askbar input{flex:1;min-width:0;background:none;border:0;min-height:44px;padding:0}
+.askbar input:focus{outline:none}
+.askbar:focus-within{border-color:var(--amber)}
+.askbar .btn{width:46px;padding:0;flex:none}
+.askbar .btn svg{width:20px;height:20px}
+.searchbar{position:static;margin:0 0 12px;box-shadow:none}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(27,18,32,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs div{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--tabs-h)}
+.tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:.74rem;font-weight:600}
+.tabs button svg{width:23px;height:23px}
+.tabs button[aria-current="page"]{color:var(--amber)}
+
+dialog.sheet{border:0;padding:0;background:var(--surface);color:var(--text);width:min(560px,100%);max-width:100%;
+  margin:auto auto 0;border-radius:22px 22px 0 0;max-height:88dvh;overflow:auto}
+dialog.sheet::backdrop{background:rgba(10,4,12,.66)}
+.sheet-in{padding:18px 16px calc(env(safe-area-inset-bottom) + 18px)}
+.sheet-h{font:800 1.2rem/1.2 var(--display);letter-spacing:-.02em}
+.sheet-sub{color:var(--muted);font-size:.9rem;margin:2px 0 10px}
+.opt{display:flex;align-items:center;width:100%;min-height:52px;border-bottom:1px solid rgba(71,52,78,.55);font-weight:500;gap:12px}
+.opt:last-child{border-bottom:0}
+.opt img{width:36px;height:36px;border-radius:6px;object-fit:cover;background:var(--raise)}
+.field{display:block;margin:14px 0 0}
+.field span{display:block;font-weight:600;font-size:.92rem;margin-bottom:6px}
+.field small{display:block;color:var(--muted);font-size:.84rem;margin-top:6px;line-height:1.4}
+.copyline{display:flex;gap:8px;align-items:center;background:var(--bg);border-radius:10px;padding:8px 10px;margin-top:6px}
+.copyline code{flex:1;min-width:0;overflow-wrap:anywhere;font-size:.84rem}
+.copyline button{color:var(--amber);font-weight:600;font-size:.88rem;min-height:36px;padding:0 6px}
+.group{border-top:1px solid var(--line);margin-top:20px;padding-top:6px}
+.group-h{font:800 1.05rem/1.2 var(--display);margin-top:10px}
+.status{font-size:.88rem;color:var(--muted);margin-top:8px}
+.status.ok{color:var(--up)}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+
+#toast{position:fixed;left:50%;bottom:calc(var(--tabs-h) + env(safe-area-inset-bottom) + 18px);transform:translate(-50%,12px);z-index:20;
+  background:var(--text);color:#2A1830;font-weight:600;font-size:.92rem;padding:10px 16px;border-radius:999px;max-width:calc(100% - 32px);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition:none !important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 class="mark">Encore</h1>
+  <button class="icon-btn" id="btnSettings" aria-label="Settings">
+    <svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>
+  </button>
+</header>
+
+<main id="view" tabindex="-1"></main>
+
+<nav class="tabs" aria-label="Sections"><div>
+  <button data-tab="ask"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-6 4z"/></svg>Ask</button>
+  <button data-tab="world"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.2 3.2 3.2 14.8 0 18M12 3c-3.2 3.2-3.2 14.8 0 18"/></svg>World</button>
+  <button data-tab="mine"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/></svg>Mine</button>
+  <button data-tab="search"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Search</button>
+</div></nav>
+
+<dialog class="sheet" id="sheet"></dialog>
+<dialog class="sheet" id="settings"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ---------- small helpers ---------- */
+const $ = (s, el) => (el || document).querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('encore.' + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('encore.' + k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem('encore.' + k); }catch(e){} }
+};
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const fmtDay = iso => { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? iso : d.toLocaleDateString(undefined, {weekday:'long', day:'numeric', month:'short'}); };
+
+/* Normalise a title or artist so the same song matches across Spotify, Deezer and Last.fm. */
+function norm(s){
+  return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s*[\(\[][^\)\]]*[\)\]]/g, ' ')
+    .replace(/\s+-\s+.*$/, ' ')
+    .replace(/\b(feat|ft|featuring)\b.*$/, ' ')
+    .replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+const firstArtist = a => String(a || '').split(/,|;| feat\.? | ft\.? | x | & /i)[0].trim();
+const songKey = (title, artist) => norm(title) + '|' + norm(firstArtist(artist));
+
+/* Chart movement: keeps today's chart and the last different day's chart, returns the new record. */
+function nextSnapshot(rec, day, keys){
+  rec = rec || {};
+  if(!rec.cur) return {cur:{day, keys}};
+  if(rec.cur.day !== day) return {prev:rec.cur, cur:{day, keys}};
+  return {prev:rec.prev, cur:{day, keys}};
+}
+function applyMovement(items, rec){
+  if(!rec || !rec.prev) return null;
+  const before = new Map(rec.prev.keys.map((k, i) => [k, i + 1]));
+  items.forEach((it, i) => { const p = before.get(songKey(it.title, it.artist)); it.move = p == null ? 'new' : p - (i + 1); });
+  return rec.prev.day;
+}
+/* Genre share across a list of songs: each song counts once for each of its artist's genres (max 3). */
+function genreStats(tracks, artistGenres){
+  const n = new Map();
+  for(const t of tracks){
+    const g = (artistGenres[t.artistId] || []).slice(0, 3);
+    for(const name of g) n.set(name, (n.get(name) || 0) + (t.count || 1));
+  }
+  return [...n.entries()].map(([genre, count]) => ({genre, count})).sort((a, b) => b.count - a.count || a.genre.localeCompare(b.genre));
+}
+function b64url(buf){ let s = ''; new Uint8Array(buf).forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function randomString(n){ const a = new Uint8Array(n); crypto.getRandomValues(a); const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; return [...a].map(x => c[x % c.length]).join(''); }
+
+/* ---------- settings ---------- */
+const DEFAULT_MODEL = 'claude-sonnet-5-5';
+let cfg = Object.assign({spotifyId:'', lastfm:'', anthropic:'', model:DEFAULT_MODEL, country:'South Africa'}, store.get('cfg', {}));
+const REDIRECT_URI = location.origin + location.pathname.replace(/index\.html$/, '');
+const SCOPES = 'user-top-read user-read-recently-played user-read-playback-state user-modify-playback-state playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public';
+const COUNTRIES = ['Worldwide','South Africa','France','United States','United Kingdom','Germany','Spain','Italy','Portugal','Netherlands','Belgium','Ireland','Sweden','Nigeria','Kenya','Ghana','Brazil','Argentina','Mexico','Canada','Australia','New Zealand','Japan','India','Jamaica'];
+
+let toastTimer;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); }
+function openDialog(d){ if(d.open) return; if(d.showModal) d.showModal(); else d.setAttribute('open', ''); }
+function closeDialog(d){ if(d.close) d.close(); else d.removeAttribute('open'); }
+
+/* ---------- Spotify: sign-in (PKCE, no secret needed) ---------- */
+async function spotifyLogin(){
+  if(!cfg.spotifyId){ toast('Add your Spotify Client ID first.'); return; }
+  const verifier = randomString(64), state = randomString(16);
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  store.set('pkce', {verifier, state});
+  location.assign('https://accounts.spotify.com/authorize?' + new URLSearchParams({
+    client_id:cfg.spotifyId, response_type:'code', redirect_uri:REDIRECT_URI,
+    code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES, state}));
+}
+async function tokenRequest(params){
+  const r = await fetch('https://accounts.spotify.com/api/token', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams(params)});
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok){ const e = new Error(j.error_description || 'Spotify sign-in failed.'); e.code = j.error; throw e; }
+  return j;
+}
+function saveToken(j){ const old = store.get('tok', {}); store.set('tok', {access:j.access_token, refresh:j.refresh_token || old.refresh, exp:Date.now() + (Number(j.expires_in || 3600) - 60) * 1000}); }
+async function handleRedirect(){
+  const q = new URLSearchParams(location.search);
+  if(!q.has('code') && !q.has('error')) return;
+  const pk = store.get('pkce'); store.del('pkce');
+  history.replaceState(null, '', location.pathname);
+  if(q.get('error')){ toast('Spotify sign-in was cancelled.'); return; }
+  if(!pk || pk.state !== q.get('state')){ toast('Spotify sign-in could not be verified. Try again.'); return; }
+  try{
+    saveToken(await tokenRequest({grant_type:'authorization_code', code:q.get('code'), redirect_uri:REDIRECT_URI, client_id:cfg.spotifyId, code_verifier:pk.verifier}));
+    toast('Spotify connected');
+  }catch(e){ toast(e.message); }
+}
+let refreshing = null;
+async function getToken(force){
+  const t = store.get('tok');
+  if(!t) return null;
+  if(!force && Date.now() < t.exp) return t.access;
+  if(!t.refresh || !cfg.spotifyId) return null;
+  if(!refreshing) refreshing = (async () => {
+    try{ saveToken(await tokenRequest({grant_type:'refresh_token', refresh_token:t.refresh, client_id:cfg.spotifyId})); return store.get('tok').access; }
+    catch(e){ if(e.code === 'invalid_grant') store.del('tok'); return null; }
+    finally{ refreshing = null; }
+  })();
+  return refreshing;
+}
+const spotifyConnected = () => !!store.get('tok');
+
+async function sp(path, opt){
+  opt = opt || {};
+  let tok = await getToken();
+  if(!tok){ const e = new Error('Connect Spotify in Settings first.'); e.needs = 'spotify'; throw e; }
+  const call = t => fetch('https://api.spotify.com/v1' + path, {method:opt.method || 'GET',
+    headers:Object.assign({Authorization:'Bearer ' + t}, opt.body ? {'Content-Type':'application/json'} : {}),
+    body:opt.body ? JSON.stringify(opt.body) : undefined});
+  let r = await call(tok);
+  if(r.status === 401){ tok = await getToken(true); if(!tok){ const e = new Error('Spotify sign-in expired. Connect again in Settings.'); e.needs = 'spotify'; throw e; } r = await call(tok); }
+  const text = await r.text();
+  let j = null; try{ j = text ? JSON.parse(text) : null; }catch(e){}
+  if(!r.ok){
+    const e = new Error(r.status === 429 ? 'Spotify is rate-limiting this app. Wait a minute and try again.' : (j && j.error && j.error.message) || ('Spotify returned an error (' + r.status + ').'));
+    e.status = r.status; e.reason = j && j.error && j.error.reason; throw e;
+  }
+  return j;
+}
+
+/* ---------- Spotify: playback ---------- */
+function openInSpotify(uri){
+  const p = String(uri).split(':'); if(p.length < 3) return;
+  const url = 'https://open.spotify.com/' + p[1] + '/' + p[2];
+  if(!window.open(url, '_blank')) location.href = url;
+}
+async function playUri(uri){
+  const body = /^spotify:track:/.test(uri) ? {uris:[uri]} : {context_uri:uri};
+  try{ await sp('/me/player/play', {method:'PUT', body}); toast('Playing on Spotify'); return; }
+  catch(e){
+    if(e.needs) throw e;
+    try{
+      const d = await sp('/me/player/devices');
+      const dev = ((d && d.devices) || []).find(x => !x.is_restricted);
+      if(dev){ await sp('/me/player/play?device_id=' + encodeURIComponent(dev.id), {method:'PUT', body}); toast('Playing on ' + dev.name); return; }
+    }catch(e2){}
+  }
+  toast('Opening in Spotify');
+  openInSpotify(uri);
+}
+const img = images => (images && images.length ? (images[1] || images[0]).url : '');
+const trackItem = t => ({kind:'track', title:t.name, artist:(t.artists || []).map(a => a.name).join(', '), artistId:t.artists && t.artists[0] && t.artists[0].id,
+  artistName:t.artists && t.artists[0] && t.artists[0].name, img:img(t.album && t.album.images), uri:t.uri, id:t.id});
+
+/* Find a chart or answer song on Spotify. Results are remembered on the phone. */
+async function resolveTrack(it){
+  if(it.uri) return it.uri;
+  const k = songKey(it.title, it.artist), map = store.get('map', {});
+  if(map[k]){ it.uri = map[k].u; if(!it.img) it.img = map[k].i; return it.uri; }
+  const plain = String(it.title).replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').replace(/"/g, '').trim();
+  const tries = ['track:"' + plain + '" artist:"' + firstArtist(it.artist).replace(/"/g, '') + '"', it.title + ' ' + firstArtist(it.artist)];
+  for(const q of tries){
+    const r = await sp('/search?' + new URLSearchParams({q, type:'track', limit:'5'}));
+    const found = ((r && r.tracks && r.tracks.items) || []).filter(Boolean);
+    if(!found.length) continue;
+    const want = norm(firstArtist(it.artist));
+    const best = found.find(t => (t.artists || []).some(a => norm(a.name) === want)) || found[0];
+    const keys = Object.keys(map); if(keys.length > 1500) keys.slice(0, 500).forEach(x => delete map[x]);
+    map[k] = {u:best.uri, i:img(best.album && best.album.images)}; store.set('map', map);
+    it.uri = best.uri; if(!it.img) it.img = map[k].i;
+    return it.uri;
+  }
+  return null;
+}
+
+/* ---------- Deezer (public charts, no key) and Last.fm (charts by country) ---------- */
+function deezer(path){
+  return new Promise((resolve, reject) => {
+    const cb = 'dz' + Date.now() + Math.random().toString(36).slice(2), s = document.createElement('script');
+    const done = () => { clearTimeout(timer); delete window[cb]; s.remove(); };
+    const timer = setTimeout(() => { done(); reject(new Error('Deezer did not respond. Check your connection and try again.')); }, 12000);
+    window[cb] = d => { done(); if(d && d.error) reject(new Error(d.error.message || 'Deezer returned an error.')); else resolve(d); };
+    s.onerror = () => { done(); reject(new Error('Could not reach Deezer. Check your connection and try again.')); };
+    s.src = 'https://api.deezer.com' + path + (path.includes('?') ? '&' : '?') + 'output=jsonp&callback=' + cb;
+    document.head.appendChild(s);
+  });
+}
+async function lastfm(params){
+  if(!cfg.lastfm){ const e = new Error('Add a Last.fm key in Settings to see charts by country.'); e.needs = 'lastfm'; throw e; }
+  let j;
+  try{ const r = await fetch('https://ws.audioscrobbler.com/2.0/?' + new URLSearchParams(Object.assign({}, params, {api_key:cfg.lastfm, format:'json'}))); j = await r.json(); }
+  catch(e){ throw new Error('Could not reach Last.fm. Check your connection and try again.'); }
+  if(j.error) throw new Error(j.error === 10 ? 'Last.fm rejected the key. Check it in Settings.' : (j.message || 'Last.fm returned an error.'));
+  return j;
+}
+async function deezerGenres(){
+  const c = store.get('dzg');
+  if(c && Date.now() - c.t < 7 * 864e5) return c.list;
+  const d = await deezer('/genre');
+  const list = ((d && d.data) || []).filter(g => g.id !== 0).map(g => ({id:g.id, name:g.name}));
+  store.set('dzg', {t:Date.now(), list});
+  return list;
+}
+const chartCache = new Map();
+/* q: {scope:'global'} | {scope:'genre', genreId, genreName} | {scope:'tag', tag} | {scope:'country', country} */
+async function getChart(q){
+  const key = q.scope + ':' + (q.genreId || q.tag || q.country || '');
+  const hit = chartCache.get(key);
+  if(hit && Date.now() - hit.t < 30 * 60e3) return hit.v;
+  let items, label;
+  if(q.scope === 'global' || q.scope === 'genre'){
+    const d = await deezer('/chart/' + (q.scope === 'genre' ? q.genreId : 0) + '/tracks?limit=50');
+    items = ((d && d.data) || []).map(t => ({kind:'track', title:t.title, artist:t.artist && t.artist.name, img:t.album && (t.album.cover_medium || t.album.cover)}));
+    label = q.scope === 'genre' ? 'Deezer’s top ' + q.genreName + ' songs right now' : 'Deezer’s top 50 songs right now';
+  }else{
+    const world = q.scope === 'country' && q.country === 'Worldwide';
+    const j = await lastfm(q.scope === 'tag' ? {method:'tag.gettoptracks', tag:q.tag, limit:'50'}
+      : world ? {method:'chart.gettoptracks', limit:'50'} : {method:'geo.gettoptracks', country:q.country, limit:'50'});
+    items = ((j.tracks && j.tracks.track) || []).map(t => ({kind:'track', title:t.name, artist:t.artist && t.artist.name}));
+    label = q.scope === 'tag' ? 'Last.fm listeners’ long-running favourites tagged “' + q.tag + '”'
+      : world ? 'Most played on Last.fm worldwide' : 'Most played on Last.fm last week in ' + q.country;
+  }
+  items = items.filter(i => i.title && i.artist);
+  items.forEach((it, i) => it.rank = i + 1);
+  const snaps = store.get('snap', {});
+  snaps[key] = nextSnapshot(snaps[key], today(), items.map(i => songKey(i.title, i.artist)));
+  store.set('snap', snaps);
+  const v = {items, label, since:applyMovement(items, snaps[key])};
+  chartCache.set(key, {t:Date.now(), v});
+  return v;
+}
+
+/* ---------- your listening ---------- */
+const RANGES = [['short_term','4 weeks'],['medium_term','6 months'],['long_term','1 year'],['counted','Counted']];
+async function topData(range){
+  const c = store.get('top.' + range);
+  if(c && Date.now() - c.t < 60 * 60e3) return c;
+  const [tr, ar] = await Promise.all([sp('/me/top/tracks?time_range=' + range + '&limit=50'), sp('/me/top/artists?time_range=' + range + '&limit=50')]);
+  const ag = store.get('ag', {});
+  const artists = ((ar && ar.items) || []).map(a => { if(a.genres && a.genres.length) ag[a.id] = a.genres;
+    return {kind:'artist', title:a.name, artist:(a.genres || []).slice(0, 2).join(', '), img:img(a.images), uri:a.uri, id:a.id}; });
+  store.set('ag', ag);
+  const v = {t:Date.now(), tracks:((tr && tr.items) || []).map(trackItem), artists};
+  store.set('top.' + range, v);
+  return v;
+}
+let lastSync = 0;
+async function syncHistory(){
+  if(!spotifyConnected() || Date.now() - lastSync < 120e3) return;
+  lastSync = Date.now();
+  const r = await sp('/me/player/recently-played?limit=50');
+  const h = store.get('hist', {tracks:{}, plays:[]});
+  const seen = new Set(h.plays.map(p => p[0]));
+  for(const it of (r && r.items) || []){
+    const ts = Date.parse(it.played_at), t = it.track;
+    if(!t || !t.id || isNaN(ts) || seen.has(ts)) continue;
+    const x = trackItem(t);
+    h.tracks[t.id] = {n:x.title, a:x.artist, ai:x.artistId, an:x.artistName, u:x.uri, i:x.img};
+    h.plays.push([ts, t.id]);
+  }
+  h.plays.sort((a, b) => a[0] - b[0]);
+  if(h.plays.length > 20000) h.plays = h.plays.slice(-20000);
+  store.set('hist', h);
+}
+function countedData(){
+  const h = store.get('hist', {tracks:{}, plays:[]});
+  const n = new Map(), an = new Map();
+  for(const p of h.plays){ const t = h.tracks[p[1]]; if(!t) continue; n.set(p[1], (n.get(p[1]) || 0) + 1);
+    if(t.ai){ const a = an.get(t.ai) || {kind:'artist', title:t.an, artist:'', uri:'spotify:artist:' + t.ai, id:t.ai, count:0}; a.count++; an.set(t.ai, a); } }
+  const tracks = [...n.entries()].sort((a, b) => b[1] - a[1]).slice(0, 50).map(([id, count]) => { const t = h.tracks[id];
+    return {kind:'track', title:t.n, artist:t.a, artistId:t.ai, artistName:t.an, img:t.i, uri:t.u, id, count}; });
+  return {tracks, artists:[...an.values()].sort((a, b) => b.count - a.count).slice(0, 50), plays:h.plays.length, since:h.plays.length ? h.plays[0][0] : null};
+}
+const NOT_GENRES = /^(seen live|favou?rites?|favou?rite songs?|love|loved|awesome|beautiful|male vocalists?|female vocalists?|singer-songwriter|under 2000 listeners|all|spotify|\d{2,4}s?)$/;
+async function fillGenres(tracks){
+  const ag = store.get('ag', {});
+  const todo = []; const seen = new Set();
+  for(const t of tracks){ if(t.artistId && !(t.artistId in ag) && !seen.has(t.artistId)){ seen.add(t.artistId); todo.push(t); } }
+  const queue = todo.slice(0, 45);
+  const worker = async () => { for(let t; (t = queue.shift()); ){
+    let g = [];
+    try{ const a = await sp('/artists/' + t.artistId); g = (a && a.genres) || []; }catch(e){ if(e.status === 429 || e.needs) return; }
+    if(!g.length && cfg.lastfm){
+      try{ const j = await lastfm({method:'artist.gettoptags', artist:t.artistName, autocorrect:'1'});
+        g = ((j.toptags && j.toptags.tag) || []).filter(x => Number(x.count) >= 25).map(x => String(x.name).toLowerCase())
+          .filter(x => !NOT_GENRES.test(x) && x !== norm(t.artistName)).slice(0, 3); }catch(e){}
+    }
+    ag[t.artistId] = g;
+  } };
+  await Promise.all([worker(), worker(), worker()]);
+  store.set('ag', ag);
+  return ag;
+}
+function mineKeys(){
+  const s = new Set();
+  for(const r of RANGES){ const c = store.get('top.' + r[0]); if(c) c.tracks.forEach(t => s.add(songKey(t.title, t.artist))); }
+  const h = store.get('hist'); if(h) Object.values(h.tracks).forEach(t => s.add(songKey(t.n, t.a)));
+  return s;
+}
+
+/* ---------- Claude: natural-language questions ---------- */
+const TOOLS = [
+  {name:'get_chart', description:'Fetch a current popularity chart of songs. Use this for anything about what is popular, trending or new right now; never rely on memory for that. scope "global" is the overall top 50 (Deezer). scope "genre" needs a genre such as Pop, Rap/Hip Hop, Rock, Dance, R&B, Alternative, Electro, Folk, Reggae, Jazz, Classical, Metal, Soul & Funk, Blues, Latin Music, African Music, Country (Deezer). scope "country" needs a country name in English such as "South Africa" or "France" (Last.fm, most played last week). Each song has a rank and, when known, its change since the previous visit ("new" or places moved; positive is up).',
+   input_schema:{type:'object', properties:{scope:{type:'string', enum:['global','genre','country']}, genre:{type:'string'}, country:{type:'string'}}, required:['scope']}},
+  {name:'get_my_listening', description:'Fetch the user\'s own most played songs and artists on Spotify, with artist genres. Use it when the question is about the user\'s own taste or habits.',
+   input_schema:{type:'object', properties:{period:{type:'string', enum:['4 weeks','6 months','1 year']}}, required:['period']}},
+  {name:'answer', description:'Give the final answer. Always finish by calling this exactly once.',
+   input_schema:{type:'object', properties:{text:{type:'string', description:'The answer in plain text, no markdown. Two to five short sentences.'},
+     songs:{type:'array', description:'Up to 10 real songs the user can play, most relevant first. Omit if no songs apply.', items:{type:'object',
+       properties:{title:{type:'string', description:'Exact official song title'}, artist:{type:'string', description:'Main artist'}, note:{type:'string', description:'One short line on why it is here'}}, required:['title','artist']}}}, required:['text']}}
+];
+function systemPrompt(){
+  return 'You are the music guide inside Encore, a personal music app used by one listener based in ' + (cfg.country === 'Worldwide' ? 'South Africa' : cfg.country) + '. Today is ' + new Date().toDateString() + '.\n' +
+  'Answer questions about songs, artists, music history, what songs mean, and what people are listening to now.\n' +
+  'Be accurate. Only name real recordings, with exact official titles and the main artist, because the app looks each one up on Spotify. If a popular belief about a song is wrong or oversimplified, say so briefly.\n' +
+  'For anything about current popularity, call get_chart first. Charts come from Deezer and Last.fm, not from Spotify; mention the source when you report chart positions.\n' +
+  'Finish by calling the answer tool. Write in the language the user writes in.';
+}
+async function anthropic(body){
+  let r;
+  try{ r = await fetch('https://api.anthropic.com/v1/messages', {method:'POST', headers:{'content-type':'application/json', 'x-api-key':cfg.anthropic,
+    'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify(body)}); }
+  catch(e){ throw new Error('Could not reach Claude. Check your connection and try again.'); }
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok){
+    if(r.status === 401) throw new Error('The Anthropic key was rejected. Check it in Settings.');
+    if(r.status === 404) throw new Error('The model “' + body.model + '” was not found. Change the model name in Settings.');
+    if(r.status === 429 || r.status === 529) throw new Error('Claude is busy right now. Try again in a moment.');
+    throw new Error((j.error && j.error.message) || 'Claude returned an error (' + r.status + ').');
+  }
+  return j;
+}
+async function runTool(name, input){
+  if(name === 'get_chart'){
+    let q;
+    if(input.scope === 'genre'){
+      const want = norm(input.genre || '');
+      if(!want) return {error:'Give a genre name.'};
+      const list = await deezerGenres();
+      const g = list.find(x => norm(x.name) === want) || list.find(x => norm(x.name).includes(want) || want.includes(norm(x.name)));
+      if(g) q = {scope:'genre', genreId:g.id, genreName:g.name};
+      else if(cfg.lastfm) q = {scope:'tag', tag:String(input.genre).toLowerCase()};
+      else return {error:'No chart for that genre.', available_genres:list.map(x => x.name)};
+    }else if(input.scope === 'country') q = {scope:'country', country:input.country || cfg.country};
+    else q = {scope:'global'};
+    const c = await getChart(q);
+    return {chart:c.label, compared_with:c.since || undefined, songs:c.items.slice(0, 40).map(i => ({rank:i.rank, title:i.title, artist:i.artist, change:i.move === undefined ? undefined : i.move}))};
+  }
+  if(name === 'get_my_listening'){
+    const range = {'4 weeks':'short_term', '6 months':'medium_term', '1 year':'long_term'}[input.period] || 'medium_term';
+    const d = await topData(range), ag = store.get('ag', {});
+    return {period:input.period, top_songs:d.tracks.slice(0, 30).map((t, i) => ({rank:i + 1, title:t.title, artist:t.artist})),
+      top_artists:d.artists.slice(0, 20).map((a, i) => ({rank:i + 1, name:a.title, genres:(ag[a.id] || []).slice(0, 3)}))};
+  }
+  return {error:'Unknown tool.'};
+}
+async function askClaude(question, history, onStatus){
+  const msgs = history.concat([{role:'user', content:question}]);
+  for(let step = 0; step < 6; step++){
+    const res = await anthropic({model:cfg.model || DEFAULT_MODEL, max_tokens:1800, system:systemPrompt(), tools:TOOLS, messages:msgs});
+    const uses = (res.content || []).filter(b => b.type === 'tool_use');
+    const ans = uses.find(u => u.name === 'answer');
+    if(ans) return {text:String((ans.input && ans.input.text) || ''), songs:Array.isArray(ans.input && ans.input.songs) ? ans.input.songs.filter(s => s && s.title && s.artist).slice(0, 10) : []};
+    if(!uses.length) return {text:(res.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim() || 'No answer came back. Try asking again.', songs:[]};
+    msgs.push({role:'assistant', content:res.content});
+    const results = [];
+    for(const u of uses){
+      onStatus(u.name === 'get_chart' ? 'Checking the charts' : 'Looking at your listening');
+      let out; try{ out = await runTool(u.name, u.input || {}); }catch(e){ out = {error:e.message}; }
+      results.push({type:'tool_result', tool_use_id:u.id, content:JSON.stringify(out)});
+    }
+    msgs.push({role:'user', content:results});
+    onStatus('Thinking');
+  }
+  throw new Error('That took too many steps. Try a narrower question.');
+}
+
+/* ---------- screen state ---------- */
+const S = {
+  tab:store.get('tab', cfg.anthropic ? 'ask' : 'world'),
+  world:{mode:'global', genres:null, genre:null, country:cfg.country, data:null, loading:false, error:null, needs:null},
+  mine:{range:'short_term', view:'songs', genre:null, data:null, ag:{}, loading:false, error:null},
+  search:{q:'', type:'track', items:[], offset:0, more:false, loading:false, error:null, done:false},
+  ask:{thread:store.get('thread', []), busy:false, status:''}
+};
+const rows = [];
+const reg = it => rows.push(it) - 1;
+
+function moveHTML(it){
+  if(it.count) return '<span class="side">' + it.count + (it.count === 1 ? ' play' : ' plays') + '</span>';
+  if(it.move === undefined || it.move === 0) return '';
+  if(it.move === 'new') return '<span class="side mv new">new</span>';
+  return it.move > 0 ? '<span class="side mv up" aria-label="up ' + it.move + '">▲ ' + it.move + '</span>' : '<span class="side mv down" aria-label="down ' + (-it.move) + '">▼ ' + (-it.move) + '</span>';
+}
+function rowHTML(it, ranked){
+  const id = reg(it), round = it.kind === 'artist' ? ' round' : '';
+  return '<li class="row" data-row="' + id + '">' +
+    (ranked ? '<span class="rank' + (it.rank <= 3 ? ' top' : '') + '">' + it.rank + '</span>' : '') +
+    '<button class="row-main" data-act="play">' +
+      (it.img ? '<img class="art' + round + '" src="' + esc(it.img) + '" alt="" loading="lazy" width="48" height="48">' : '<span class="art ph' + round + '" aria-hidden="true"></span>') +
+      '<span class="row-text"><span class="t">' + esc(it.title) + '</span>' +
+      (it.artist ? '<span class="a">' + esc(it.artist) + '</span>' : '') +
+      (it.yours ? '<span class="yours">You play this</span>' : '') +
+      (it.note ? '<span class="n">' + esc(it.note) + '</span>' : '') + '</span></button>' +
+    moveHTML(it) +
+    '<button class="icon-btn" data-act="more" aria-label="More options for ' + esc(it.title) + '"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></li>';
+}
+const segHTML = (name, opts, cur, cls) => '<div class="seg ' + (cls || '') + '">' + opts.map(o => '<button data-seg="' + name + '" data-val="' + esc(o[0]) + '" aria-pressed="' + (o[0] === cur) + '">' + esc(o[1]) + '</button>').join('') + '</div>';
+const emptyHTML = (h, p, btn) => '<div class="empty"><h2>' + esc(h) + '</h2><p>' + esc(p) + '</p>' + (btn ? '<button class="btn" data-act="' + btn[0] + '">' + esc(btn[1]) + '</button>' : '') + '</div>';
+const SEND = '<svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+
+/* ---------- World ---------- */
+function frameWorld(){
+  $('#view').innerHTML = '<h2 class="h">What the world is playing</h2>' +
+    segHTML('wmode', [['global','Global'],['genre','By genre'],['country','By country']], S.world.mode) + '<div id="wctl"></div><div id="wlist"></div>';
+  paintWorld();
+  if(!S.world.data && !S.world.loading) loadWorld();
+}
+function paintWorld(){
+  const w = S.world, ctl = $('#wctl'), list = $('#wlist');
+  if(!ctl || S.tab !== 'world') return;
+  document.querySelectorAll('[data-seg="wmode"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.val === w.mode));
+  if(w.mode === 'genre') ctl.innerHTML = w.genres ? '<div class="chips">' + w.genres.map(g => '<button class="chip" data-genre="' + g.id + '" aria-pressed="' + (w.genre && w.genre.id === g.id) + '">' + esc(g.name) + '</button>').join('') + '</div>' : '';
+  else if(w.mode === 'country') ctl.innerHTML = '<select id="wcountry" aria-label="Country">' + COUNTRIES.map(c => '<option' + (c === w.country ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select>';
+  else ctl.innerHTML = '';
+  if(w.loading){ list.innerHTML = '<p class="spin">Loading the chart</p>'; return; }
+  if(w.needs === 'lastfm'){ list.innerHTML = emptyHTML('Charts by country need a Last.fm key', 'The key is free and takes two minutes to get. Add it in Settings and this view fills in.', ['settings','Open Settings']); return; }
+  if(w.error){ list.innerHTML = '<p class="err">' + esc(w.error) + '</p><button class="btn ghost" data-act="reload-world">Try again</button>'; return; }
+  if(!w.data) { list.innerHTML = ''; return; }
+  if(!w.data.items.length){ list.innerHTML = '<p class="meta">No chart is available for this choice right now.</p>'; return; }
+  const mine = mineKeys();
+  w.data.items.forEach(it => it.yours = mine.has(songKey(it.title, it.artist)));
+  const fresh = w.data.items.filter(i => i.move === 'new').length;
+  list.innerHTML = '<p class="meta">' + esc(w.data.label) + (w.data.since ? '. ' + (fresh ? fresh + ' new' : 'Nothing new') + ' since ' + esc(fmtDay(w.data.since)) + '.' : '') + '</p>' +
+    '<ul>' + w.data.items.map(it => rowHTML(it, true)).join('') + '</ul>';
+}
+async function loadWorld(){
+  const w = S.world; w.loading = true; w.error = null; w.needs = null; w.data = null; paintWorld();
+  try{
+    if(w.mode === 'genre'){
+      if(!w.genres) w.genres = await deezerGenres();
+      if(!w.genre) w.genre = w.genres[0];
+      w.data = w.genre ? await getChart({scope:'genre', genreId:w.genre.id, genreName:w.genre.name}) : {items:[], label:''};
+    }else if(w.mode === 'country') w.data = await getChart({scope:'country', country:w.country});
+    else w.data = await getChart({scope:'global'});
+  }catch(e){ if(e.needs) w.needs = e.needs; else w.error = e.message; }
+  w.loading = false; paintWorld();
+}
+
+/* ---------- Mine ---------- */
+function frameMine(){
+  if(!spotifyConnected()){
+    $('#view').innerHTML = '<h2 class="h">Your most played</h2>' + emptyHTML('Connect Spotify to see your top songs', 'Encore reads your most played songs and artists, and groups them by genre. Nothing leaves your phone.', ['settings','Open Settings']);
+    return;
+  }
+  $('#view').innerHTML = '<h2 class="h">Your most played</h2>' + segHTML('range', RANGES, S.mine.range) +
+    segHTML('mview', [['songs','Songs'],['artists','Artists'],['genres','Genres']], S.mine.view, 'quiet') + '<div id="mlist"></div>';
+  paintMine();
+  if(!S.mine.data && !S.mine.loading) loadMine();
+}
+function paintMine(){
+  const m = S.mine, list = $('#mlist');
+  if(!list || S.tab !== 'mine') return;
+  document.querySelectorAll('[data-seg="range"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.val === m.range));
+  document.querySelectorAll('[data-seg="mview"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.val === m.view));
+  if(m.error){ list.innerHTML = '<p class="err">' + esc(m.error) + '</p><button class="btn ghost" data-act="reload-mine">Try again</button>'; return; }
+  if(!m.data){ list.innerHTML = '<p class="spin">Loading your listening</p>'; return; }
+  const d = m.data;
+  let head = '';
+  if(m.range === 'counted'){
+    if(!d.plays){ list.innerHTML = emptyHTML('Nothing counted yet', 'Each time you open Encore it saves your last 50 plays on this phone. Open it every day or two and real play counts build up here.'); return; }
+    head = '<p class="meta">' + d.plays + ' plays counted since ' + esc(new Date(d.since).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'})) + '</p>';
+  }
+  if(m.view === 'genres'){
+    const stats = genreStats(d.tracks, m.ag);
+    if(m.genre){
+      const picks = d.tracks.filter(t => (m.ag[t.artistId] || []).slice(0, 3).includes(m.genre));
+      list.innerHTML = head + '<div class="chips wrap" style="margin:8px 0 2px"><button class="chip" aria-pressed="true" data-act="clear-genre">' + esc(m.genre) + ' ×</button></div><ul>' + picks.map(t => rowHTML(t)).join('') + '</ul>';
+      return;
+    }
+    if(!stats.length){ list.innerHTML = head + (m.loading ? '<p class="spin">Working out genres</p>' : '<p class="meta">No genre details are available for these artists. Adding a Last.fm key in Settings fills most of the gaps.</p>'); return; }
+    const max = stats[0].count;
+    list.innerHTML = head + (m.loading ? '<p class="spin">Working out genres</p>' : '<p class="meta">Genres come from each song’s main artist. Tap one to see its songs.</p>') +
+      '<ul class="bars">' + stats.slice(0, 15).map(s => '<li><button class="bar" data-mgenre="' + esc(s.genre) + '"><span class="bar-top"><span>' + esc(s.genre) + '</span><span>' +
+      s.count + (m.range === 'counted' ? (s.count === 1 ? ' play' : ' plays') : (s.count === 1 ? ' song' : ' songs')) + '</span></span><span class="bar-track"><span class="bar-fill" style="width:' + Math.max(4, Math.round(s.count / max * 100)) + '%"></span></span></button></li>').join('') + '</ul>';
+    return;
+  }
+  const items = m.view === 'artists' ? d.artists : d.tracks;
+  if(!items.length){ list.innerHTML = head + '<p class="meta">Spotify has no ranking for this period yet. Try a longer one.</p>'; return; }
+  items.forEach((it, i) => it.rank = i + 1);
+  list.innerHTML = head + '<ul>' + items.map(it => rowHTML(it, true)).join('') + '</ul>';
+}
+async function loadMine(){
+  const m = S.mine, range = m.range;
+  m.loading = true; m.error = null; m.data = null; m.genre = null; m.ag = store.get('ag', {}); paintMine();
+  try{
+    if(range === 'counted'){ lastSync = 0; await syncHistory().catch(() => {}); if(m.range !== range) return; m.data = countedData(); }
+    else { const d = await topData(range); if(m.range !== range) return; m.data = d; syncHistory().catch(() => {}); }
+    paintMine();
+    const ag = await fillGenres(m.data.tracks);
+    if(m.range !== range) return;
+    m.ag = ag;
+  }catch(e){ if(m.range !== range) return; if(!m.data) m.error = e.message; }
+  m.loading = false; paintMine();
+}
+
+/* ---------- Search ---------- */
+function frameSearch(){
+  const s = S.search;
+  if(!spotifyConnected()){
+    $('#view').innerHTML = '<h2 class="h">Search Spotify</h2>' + emptyHTML('Connect Spotify to search', 'Search finds songs and playlists in Spotify’s catalogue and plays them on your phone or speaker.', ['settings','Open Settings']);
+    return;
+  }
+  $('#view').innerHTML = '<h2 class="h">Search Spotify</h2><form class="askbar searchbar" id="sform" role="search"><input id="sq" type="search" enterkeyhint="search" autocomplete="off" placeholder="Song, artist or playlist" aria-label="Search Spotify" value="' + esc(s.q) + '">' +
+    '<button class="btn" aria-label="Search"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button></form>' +
+    segHTML('stype', [['track','Songs'],['playlist','Playlists']], s.type, 'quiet') + '<div id="slist"></div>';
+  paintSearch();
+}
+function paintSearch(){
+  const s = S.search, list = $('#slist');
+  if(!list || S.tab !== 'search') return;
+  document.querySelectorAll('[data-seg="stype"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.val === s.type));
+  let h = s.items.length ? '<ul>' + s.items.map(it => rowHTML(it)).join('') + '</ul>' : '';
+  if(s.loading) h += '<p class="spin">Searching</p>';
+  else if(s.error) h += '<p class="err">' + esc(s.error) + '</p>';
+  else if(s.done && !s.items.length) h += '<p class="meta">Nothing found for “' + esc(s.q) + '”. Check the spelling or try fewer words.</p>';
+  else if(s.more) h += '<div class="stack"><button class="btn ghost block" data-act="more-results">Show more results</button></div>';
+  list.innerHTML = h;
+}
+async function runSearch(more){
+  const s = S.search;
+  if(!s.q.trim() || s.loading) return;
+  if(!more){ s.items = []; s.offset = 0; s.done = false; }
+  const q = s.q, type = s.type;
+  s.loading = true; s.error = null; s.more = false; paintSearch();
+  try{
+    const r = await sp('/search?' + new URLSearchParams({q, type, limit:'10', offset:String(s.offset)}));
+    if(s.q !== q || s.type !== type) { s.loading = false; return; }
+    const page = (r && (type === 'track' ? r.tracks : r.playlists)) || {};
+    const found = (page.items || []).filter(Boolean).map(x => type === 'track' ? trackItem(x)
+      : {kind:'playlist', title:x.name, artist:'Playlist by ' + ((x.owner && x.owner.display_name) || 'Spotify'), img:img(x.images), uri:x.uri});
+    s.items = s.items.concat(found); s.offset += 10; s.more = !!page.next && s.offset < 100; s.done = true;
+  }catch(e){ s.error = e.message; }
+  s.loading = false; paintSearch();
+}
+
+/* ---------- Ask ---------- */
+const EXAMPLES = ['A Bob Dylan song connected to the Vietnam war', 'What is new in the global top 50?', 'Which French rap songs are trending?', 'What does my listening say about my taste?'];
+function frameAsk(){
+  if(!cfg.anthropic){
+    $('#view').innerHTML = '<h2 class="h">Ask about any song, artist or chart</h2>' + emptyHTML('Add your Anthropic key to ask questions', 'Questions are answered by Claude using your own API key. The key stays on this phone.', ['settings','Open Settings']);
+    return;
+  }
+  $('#view').innerHTML = '<div id="thread"></div><form class="askbar" id="aform"><input id="aq" type="text" enterkeyhint="send" autocomplete="off" placeholder="Ask about music" aria-label="Your question">' +
+    '<button class="btn" id="asend" aria-label="Ask">' + SEND + '</button></form>';
+  paintAsk();
+}
+function paintAsk(scroll){
+  const a = S.ask, el = $('#thread');
+  if(!el || S.tab !== 'ask') return;
+  if(!a.thread.length && !a.busy){
+    el.innerHTML = '<h2 class="h">Ask about any song, artist or chart</h2><p class="meta" style="margin-bottom:12px">Try one of these, or type your own below.</p><div class="chips wrap">' +
+      EXAMPLES.map(x => '<button class="chip" data-example="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>';
+  }else{
+    el.innerHTML = a.thread.map(x => '<section class="ex"><p class="q">' + esc(x.q) + '</p>' +
+      (x.err ? '<p class="err">' + esc(x.err) + '</p>' : x.text === undefined ? '<p class="spin">' + esc(a.status || 'Thinking') + '</p>' :
+        '<p class="ans">' + esc(x.text) + '</p>' + (x.songs && x.songs.length ? '<ul>' + x.songs.map(s => rowHTML(Object.assign(s, {kind:'track'}))).join('') + '</ul>' : '')) +
+      '</section>').join('') + (a.busy ? '' : '<div class="stack"><button class="btn ghost" data-act="new-thread" style="align-self:flex-start">Start a new conversation</button></div>');
+  }
+  const send = $('#asend'); if(send) send.disabled = a.busy;
+  if(scroll){ const last = el.querySelector('.ex:last-of-type'); if(last && last.scrollIntoView) last.scrollIntoView({block:'start', behavior:'smooth'}); }
+}
+async function submitQuestion(q){
+  const a = S.ask; q = String(q || '').trim();
+  if(!q || a.busy) return;
+  if(S.tab !== 'ask') switchTab('ask');
+  if(!cfg.anthropic) return;
+  const history = [];
+  a.thread.slice(-6).forEach(x => { if(x.text === undefined || x.err) return;
+    history.push({role:'user', content:x.q});
+    history.push({role:'assistant', content:x.text + (x.songs && x.songs.length ? '\nSongs: ' + x.songs.map(s => s.title + ' by ' + s.artist).join('; ') : '')}); });
+  const entry = {q}; a.thread.push(entry); a.busy = true; a.status = 'Thinking';
+  const inp = $('#aq'); if(inp) inp.value = '';
+  paintAsk(true);
+  try{ const r = await askClaude(q, history, st => { a.status = st; paintAsk(); }); entry.text = r.text; entry.songs = r.songs.map(s => ({title:s.title, artist:s.artist, note:s.note || ''})); }
+  catch(e){ entry.err = e.message; }
+  a.busy = false;
+  store.set('thread', a.thread.slice(-15).map(x => ({q:x.q, text:x.text, err:x.err, songs:(x.songs || []).map(s => ({title:s.title, artist:s.artist, note:s.note}))})));
+  paintAsk();
+}
+
+/* ---------- actions on a song ---------- */
+async function play(it, li){
+  if(!spotifyConnected()){ toast('Connect Spotify in Settings to play music.'); return; }
+  if(li) li.classList.add('busy');
+  try{
+    const uri = it.kind === 'track' ? await resolveTrack(it) : it.uri;
+    if(!uri) toast('Could not find this song on Spotify.'); else await playUri(uri);
+  }catch(e){ toast(e.message); }
+  if(li) li.classList.remove('busy');
+}
+let sheetItem = null;
+function openMore(it){
+  sheetItem = it;
+  const opts = [['play','Play'], ...(it.kind === 'track' ? [['playlist','Add to a playlist'], ['explain','Tell me about this song']] : []), ['open','Open in Spotify']];
+  $('#sheet').innerHTML = '<div class="sheet-in"><p class="sheet-h">' + esc(it.title) + '</p><p class="sheet-sub">' + esc(it.artist || '') + '</p>' +
+    opts.map(o => '<button class="opt" data-sheet="' + o[0] + '">' + o[1] + '</button>').join('') + '<div class="stack"><button class="btn ghost block" data-sheet="close">Close</button></div></div>';
+  openDialog($('#sheet'));
+}
+async function pickPlaylist(it){
+  const sh = $('#sheet');
+  sh.innerHTML = '<div class="sheet-in"><p class="sheet-h">Add to a playlist</p><p class="spin">Loading your playlists</p></div>';
+  try{
+    let me = store.get('me'); if(!me){ const m = await sp('/me'); me = {id:m.id}; store.set('me', me); }
+    const r = await sp('/me/playlists?limit=50');
+    const own = ((r && r.items) || []).filter(p => p && ((p.owner && p.owner.id === me.id) || p.collaborative));
+    sh.innerHTML = '<div class="sheet-in"><p class="sheet-h">Add to a playlist</p><p class="sheet-sub">' + esc(it.title) + '</p>' +
+      '<button class="opt" data-newlist="1">New playlist “Encore finds”</button>' +
+      own.map(p => '<button class="opt" data-list="' + esc(p.id) + '" data-name="' + esc(p.name) + '">' + (img(p.images) ? '<img src="' + esc(img(p.images)) + '" alt="">' : '') + esc(p.name) + '</button>').join('') +
+      '<div class="stack"><button class="btn ghost block" data-sheet="close">Close</button></div></div>';
+  }catch(e){ closeDialog(sh); toast(e.message); }
+}
+async function addToPlaylist(it, id, name){
+  closeDialog($('#sheet'));
+  try{
+    const uri = await resolveTrack(it);
+    if(!uri){ toast('Could not find this song on Spotify.'); return; }
+    if(!id){ const p = await sp('/me/playlists', {method:'POST', body:{name:'Encore finds', public:false, description:'Songs saved from Encore'}}); id = p.id; name = p.name; }
+    await sp('/playlists/' + encodeURIComponent(id) + '/items', {method:'POST', body:{uris:[uri]}});
+    toast('Added to ' + name);
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- settings sheet ---------- */
+function openSettings(){
+  const on = spotifyConnected();
+  $('#settings').innerHTML = '<form class="sheet-in" id="setform"><p class="sheet-h">Settings</p><p class="sheet-sub">Keys are stored on this phone only.</p>' +
+    '<div class="group"><p class="group-h">Spotify</p>' +
+    '<label class="field"><span>Client ID</span><input name="spotifyId" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(cfg.spotifyId) + '"><small>From your app at developer.spotify.com/dashboard. Your Spotify account must be Premium.</small></label>' +
+    '<div class="field"><span>Redirect URI</span><div class="copyline"><code id="ruri">' + esc(REDIRECT_URI) + '</code><button type="button" data-act="copy-uri">Copy</button></div><small>Paste this exactly into the Spotify dashboard under Redirect URIs.</small></div>' +
+    '<p class="status' + (on ? ' ok' : '') + '">' + (on ? 'Connected to Spotify' : 'Not connected yet') + '</p>' +
+    '<div class="stack"><button type="button" class="btn' + (on ? ' ghost' : '') + ' block" data-act="' + (on ? 'spotify-off' : 'spotify-on') + '">' + (on ? 'Disconnect Spotify' : 'Save and connect Spotify') + '</button></div></div>' +
+    '<div class="group"><p class="group-h">Charts</p>' +
+    '<label class="field"><span>Last.fm API key</span><input name="lastfm" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(cfg.lastfm) + '"><small>Free from last.fm/api/account/create. Needed for charts by country. Global and genre charts work without it.</small></label>' +
+    '<label class="field"><span>Home country</span><select name="country">' + COUNTRIES.map(c => '<option' + (c === cfg.country ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></label></div>' +
+    '<div class="group"><p class="group-h">Questions</p>' +
+    '<label class="field"><span>Anthropic API key</span><input name="anthropic" type="password" autocomplete="off" value="' + esc(cfg.anthropic) + '"><small>From console.anthropic.com. Each question costs roughly a cent.</small></label>' +
+    '<label class="field"><span>Model</span><input name="model" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(cfg.model || DEFAULT_MODEL) + '"></label></div>' +
+    '<div class="stack"><button class="btn block">Save settings</button><button type="button" class="btn ghost block" data-act="clear-history">Delete the play history on this phone</button>' +
+    '<button type="button" class="btn ghost block" data-act="close-settings">Close</button></div></form>';
+  openDialog($('#settings'));
+}
+function saveSettings(){
+  const f = $('#setform'); if(!f) return;
+  const v = n => String(f.elements[n].value || '').trim();
+  const idChanged = v('spotifyId') !== cfg.spotifyId;
+  cfg = {spotifyId:v('spotifyId'), lastfm:v('lastfm'), anthropic:v('anthropic'), model:v('model') || DEFAULT_MODEL, country:v('country') || 'South Africa'};
+  store.set('cfg', cfg);
+  if(idChanged) store.del('tok');
+  S.world.country = cfg.country; S.world.data = null;
+}
+
+/* ---------- navigation and events ---------- */
+const FRAMES = {ask:frameAsk, world:frameWorld, mine:frameMine, search:frameSearch};
+function switchTab(tab){
+  if(!FRAMES[tab]) tab = 'world';
+  S.tab = tab; store.set('tab', tab);
+  document.querySelectorAll('.tabs button').forEach(b => { if(b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  rows.length = 0;
+  FRAMES[tab]();
+  window.scrollTo(0, 0);
+}
+document.addEventListener('click', async ev => {
+  const t = ev.target.closest('button'); if(!t) return;
+  if(t.dataset.tab) return switchTab(t.dataset.tab);
+  if(t.id === 'btnSettings') return openSettings();
+  if(t.dataset.seg){
+    const v = t.dataset.val;
+    if(t.dataset.seg === 'wmode'){ if(S.world.mode !== v){ S.world.mode = v; loadWorld(); } }
+    else if(t.dataset.seg === 'range'){ if(S.mine.range !== v){ S.mine.range = v; loadMine(); } }
+    else if(t.dataset.seg === 'mview'){ S.mine.view = v; S.mine.genre = null; paintMine(); }
+    else if(t.dataset.seg === 'stype'){ if(S.search.type !== v){ S.search.type = v; S.search.items = []; S.search.done = false; paintSearch(); runSearch(); } }
+    return;
+  }
+  if(t.dataset.genre){ S.world.genre = S.world.genres.find(g => String(g.id) === t.dataset.genre); return loadWorld(); }
+  if(t.dataset.mgenre){ S.mine.genre = t.dataset.mgenre; paintMine(); window.scrollTo(0, 0); return; }
+  if(t.dataset.example) return submitQuestion(t.dataset.example);
+  if(t.dataset.sheet){
+    const it = sheetItem, a = t.dataset.sheet;
+    if(a === 'playlist') return pickPlaylist(it);
+    closeDialog($('#sheet'));
+    if(a === 'play') return play(it);
+    if(a === 'explain') return submitQuestion('Tell me about “' + it.title + '” by ' + it.artist + ': its background and what it is about.');
+    if(a === 'open'){
+      if(!spotifyConnected() && !it.uri){ toast('Connect Spotify in Settings first.'); return; }
+      try{ const uri = it.kind === 'track' ? await resolveTrack(it) : it.uri; if(uri) openInSpotify(uri); else toast('Could not find this song on Spotify.'); }catch(e){ toast(e.message); }
+    }
+    return;
+  }
+  if(t.dataset.list) return addToPlaylist(sheetItem, t.dataset.list, t.dataset.name);
+  if(t.dataset.newlist) return addToPlaylist(sheetItem, null, null);
+  const act = t.dataset.act; if(!act) return;
+  const li = t.closest('[data-row]'), it = li ? rows[Number(li.dataset.row)] : null;
+  if(act === 'play' && it) return play(it, li);
+  if(act === 'more' && it) return openMore(it);
+  if(act === 'settings') return openSettings();
+  if(act === 'reload-world') return loadWorld();
+  if(act === 'reload-mine') return loadMine();
+  if(act === 'clear-genre'){ S.mine.genre = null; return paintMine(); }
+  if(act === 'more-results') return runSearch(true);
+  if(act === 'new-thread'){ S.ask.thread = []; store.del('thread'); paintAsk(); window.scrollTo(0, 0); return; }
+  if(act === 'copy-uri'){ try{ await navigator.clipboard.writeText(REDIRECT_URI); toast('Redirect URI copied'); }catch(e){ toast('Press and hold the address to copy it.'); } return; }
+  if(act === 'spotify-on'){ saveSettings(); return spotifyLogin(); }
+  if(act === 'spotify-off'){ store.del('tok'); store.del('me'); toast('Spotify disconnected'); closeDialog($('#settings')); return switchTab(S.tab); }
+  if(act === 'clear-history'){ if(confirm('Delete the play history saved on this phone? This cannot be undone.')){ store.del('hist'); S.mine.data = null; toast('Play history deleted'); } return; }
+  if(act === 'close-settings') return closeDialog($('#settings'));
+});
+document.addEventListener('submit', ev => {
+  ev.preventDefault();
+  if(ev.target.id === 'aform') submitQuestion($('#aq').value);
+  else if(ev.target.id === 'sform'){ S.search.q = $('#sq').value; $('#sq').blur(); runSearch(); }
+  else if(ev.target.id === 'setform'){ saveSettings(); closeDialog($('#settings')); toast('Settings saved'); switchTab(S.tab); }
+});
+document.addEventListener('change', ev => { if(ev.target.id === 'wcountry'){ S.world.country = ev.target.value; loadWorld(); } });
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', ev => { if(ev.target === d) closeDialog(d); }));
+document.addEventListener('visibilitychange', () => { if(!document.hidden) syncHistory().catch(() => {}); });
+
+(async function start(){
+  await handleRedirect();
+  switchTab(S.tab);
+  syncHistory().catch(() => {});
+  if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
